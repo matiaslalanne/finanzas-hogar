@@ -92,10 +92,15 @@ export default function Ahorros() {
   const ubiARS = ubicaciones.filter(u => u.moneda === 'ARS' && !u.es_reserva)
   const ubiUSD = ubicaciones.filter(u => u.moneda === 'USD' && !u.es_reserva)
   const ubiReserva = ubicaciones.filter(u => u.es_reserva)
-  const totalARS = ubiARS.reduce((s, u) => s + u.saldo, 0)
+  // totalUSD/ARS = dinero real en cuentas (sin la ubicacion reserva)
   const totalUSD = ubiUSD.reduce((s, u) => s + u.saldo, 0)
+  const totalARS = ubiARS.reduce((s, u) => s + u.saldo, 0)
+  // reserva = porcion FICTICIA del total real que esta "bloqueada"
   const totalReservaUSD = ubiReserva.filter(u => u.moneda === 'USD').reduce((s, u) => s + u.saldo, 0)
   const totalReservaARS = ubiReserva.filter(u => u.moneda === 'ARS').reduce((s, u) => s + u.saldo, 0)
+  // libre = lo que podes usar = real − reserva
+  const libreUSD = totalUSD - totalReservaUSD
+  const libreARS = totalARS - totalReservaARS
 
   const movRecientes = movimientos.filter(m => m.tipo !== 'saldo_inicial').slice(0, 30)
 
@@ -106,40 +111,44 @@ export default function Ahorros() {
       <div className="px-4 pt-4 pb-3 space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-slate-800 rounded-2xl px-4 py-3">
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">USD libre</p>
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+              {totalReservaUSD > 0 ? 'USD disponible' : 'Total USD'}
+            </p>
             <p className="text-xl font-bold text-slate-100 tabular-nums">
-              {fmtMonto(totalUSD, 'USD')}
+              {fmtMonto(totalReservaUSD > 0 ? libreUSD : totalUSD, 'USD')}
             </p>
             {totalReservaUSD > 0 && (
               <p className="text-[10px] text-slate-500 mt-1">
-                + {fmtMonto(totalReservaUSD, 'USD')} reserva
+                🔒 {fmtMonto(totalReservaUSD, 'USD')} en reserva
               </p>
             )}
           </div>
           <div className="bg-slate-800 rounded-2xl px-4 py-3">
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total ARS</p>
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+              {totalReservaARS > 0 ? 'ARS disponible' : 'Total ARS'}
+            </p>
             <p className="text-xl font-bold text-slate-100 tabular-nums">
-              {fmtMonto(totalARS, 'ARS')}
+              {fmtMonto(totalReservaARS > 0 ? libreARS : totalARS, 'ARS')}
             </p>
             {totalReservaARS > 0 && (
               <p className="text-[10px] text-slate-500 mt-1">
-                + {fmtMonto(totalReservaARS, 'ARS')} reserva
+                🔒 {fmtMonto(totalReservaARS, 'ARS')} en reserva
               </p>
             )}
           </div>
         </div>
         {(totalReservaUSD > 0 || totalReservaARS > 0) && (
           <div className="bg-slate-800/50 rounded-2xl px-4 py-2.5 flex items-center justify-between">
-            <p className="text-[11px] text-slate-500">Total con reserva</p>
+            <p className="text-[11px] text-slate-500">Total real (con reserva)</p>
             <div className="flex gap-4">
               {totalReservaUSD > 0 && (
                 <p className="text-sm font-semibold text-slate-400 tabular-nums">
-                  {fmtMonto(totalUSD + totalReservaUSD, 'USD')}
+                  {fmtMonto(totalUSD, 'USD')}
                 </p>
               )}
               {totalReservaARS > 0 && (
                 <p className="text-sm font-semibold text-slate-400 tabular-nums">
-                  {fmtMonto(totalARS + totalReservaARS, 'ARS')}
+                  {fmtMonto(totalARS, 'ARS')}
                 </p>
               )}
             </div>
