@@ -10,6 +10,10 @@ const NAV_ITEMS = [
   { to: '/mas',       label: 'Más',       icon: MoreHorizontal   },
 ]
 
+const safeTop = { paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }
+const safeBottom = { paddingBottom: 'env(safe-area-inset-bottom, 0px)' }
+const safeFAB = { bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }
+
 export default function AppShell() {
   const navigate = useNavigate()
   const { persona } = useAuth()
@@ -17,7 +21,10 @@ export default function AppShell() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+      <header
+        style={safeTop}
+        className="sticky top-0 z-20 bg-slate-900/80 backdrop-blur border-b border-slate-800 px-4 pb-3 flex items-center justify-between"
+      >
         <div className="flex items-center gap-2">
           <span className="text-xl">💰</span>
           <span className="font-semibold text-slate-100 text-sm">Finanzas Hogar</span>
@@ -36,14 +43,18 @@ export default function AppShell() {
       {/* FAB */}
       <button
         onClick={() => navigate('/cargar')}
-        className="fixed bottom-20 right-4 z-30 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 active:scale-95 rounded-full shadow-lg shadow-emerald-900/50 flex items-center justify-center transition-all"
+        style={safeFAB}
+        className="fixed right-4 z-30 w-14 h-14 bg-emerald-500 hover:bg-emerald-400 active:scale-95 rounded-full shadow-lg shadow-emerald-900/50 flex items-center justify-center transition-all"
         aria-label="Cargar gasto rápido"
       >
         <Plus size={28} className="text-slate-900" strokeWidth={2.5} />
       </button>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900 border-t border-slate-800 flex">
+      <nav
+        style={safeBottom}
+        className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900 border-t border-slate-800 flex"
+      >
         {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}

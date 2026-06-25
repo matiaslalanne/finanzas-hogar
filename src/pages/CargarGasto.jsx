@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, X } from 'lucide-react'
+import { ArrowLeft, Camera, X, ChevronDown } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useRubros } from '../hooks/useRubros'
@@ -26,6 +26,7 @@ export default function CargarGasto() {
   const [descripcion, setDescripcion] = useState('')
   const [foto, setFoto] = useState(null) // { file, previewUrl }
   const [guardando, setGuardando] = useState(false)
+  const [tecladoAbierto, setTecladoAbierto] = useState(true)
   const fotoInputRef = useRef(null)
 
   const sortedMedios = useMemo(() => {
@@ -122,7 +123,10 @@ export default function CargarGasto() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-2">
+      <header
+          style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+          className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 pb-3 flex items-center gap-2"
+        >
         <button
           onClick={() => navigate('/')}
           className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-200 active:bg-slate-800 transition-colors"
@@ -148,8 +152,8 @@ export default function CargarGasto() {
         </button>
       </header>
 
-      {/* Contenido scrollable — padding-bottom para que no tape el teclado fijo */}
-      <div className="flex-1 overflow-y-auto pb-[350px]">
+      {/* Contenido scrollable */}
+      <div className={`flex-1 overflow-y-auto transition-all ${tecladoAbierto ? 'pb-[360px]' : 'pb-32'}`}>
 
         {/* Monto */}
         <div className="text-center py-5 px-4">
@@ -285,7 +289,24 @@ export default function CargarGasto() {
 
       {/* Teclado numérico + botón guardar (fijo al fondo) */}
       <div className="fixed bottom-0 left-0 right-0 z-20 bg-slate-900/95 backdrop-blur border-t border-slate-800">
-        <NumericKeypad onKey={handleKey} />
+        {/* Toggle */}
+        <div className="flex justify-center pt-2 pb-1">
+          <button
+            onClick={() => setTecladoAbierto(v => !v)}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-400 text-xs font-medium transition-colors"
+          >
+            <ChevronDown
+              size={14}
+              className={`transition-transform duration-200 ${tecladoAbierto ? '' : 'rotate-180'}`}
+            />
+            {tecladoAbierto ? 'Ocultar teclado' : 'Mostrar teclado'}
+          </button>
+        </div>
+
+        {/* Teclado (colapsable) */}
+        {tecladoAbierto && <NumericKeypad onKey={handleKey} />}
+
+        {/* Botón guardar */}
         <div className="px-3 pt-1 pb-8">
           <button
             onClick={handleGuardar}

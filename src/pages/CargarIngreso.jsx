@@ -73,7 +73,10 @@ export default function CargarIngreso() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 py-3 flex items-center gap-2">
+      <header
+          style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+          className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-4 pb-3 flex items-center gap-2"
+        >
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-200 active:bg-slate-800 transition-colors"
