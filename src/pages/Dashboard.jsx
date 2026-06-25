@@ -174,16 +174,26 @@ export default function Dashboard() {
             <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-3">Ahorros</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div className="bg-slate-800 rounded-2xl px-4 py-3">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total USD</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                  {data.totalReservaUSD > 0 ? 'USD disponible' : 'Total USD'}
+                </p>
                 <p className="text-lg font-bold text-slate-100 tabular-nums">{fmtUSD(data.totalUSD)}</p>
+                {data.totalReservaUSD > 0 && (
+                  <p className="text-[10px] text-slate-500 mt-1">🔒 {fmtUSD(data.totalReservaUSD)} en reserva</p>
+                )}
               </div>
               <div className="bg-slate-800 rounded-2xl px-4 py-3">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total ARS</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                  {data.totalReservaARS > 0 ? 'ARS disponible' : 'Total ARS'}
+                </p>
                 <p className="text-lg font-bold text-slate-100 tabular-nums">{fmtARS(data.totalARSAhorros)}</p>
+                {data.totalReservaARS > 0 && (
+                  <p className="text-[10px] text-slate-500 mt-1">🔒 {fmtARS(data.totalReservaARS)} en reserva</p>
+                )}
               </div>
             </div>
             <div className="space-y-1.5">
-              {data.ubicaciones.map(u => (
+              {data.ubicaciones.filter(u => !u.es_reserva).map(u => (
                 <div key={u.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-800/40">
                   <span className="text-xs text-slate-400">{u.nombre}</span>
                   <span className="text-xs font-medium text-slate-300 tabular-nums">

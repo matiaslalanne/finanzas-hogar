@@ -94,8 +94,15 @@ export function useDashboard(year, month) {
       const ubicsList = ubics ?? []
       const movsList = movs ?? []
       const ubicacionesConSaldo = ubicsList.map(u => ({ ...u, saldo: calcSaldoUbic(u, movsList) }))
-      const totalUSD = ubicacionesConSaldo.filter(u => u.moneda === 'USD').reduce((s, u) => s + u.saldo, 0)
-      const totalARSAhorros = ubicacionesConSaldo.filter(u => u.moneda === 'ARS').reduce((s, u) => s + u.saldo, 0)
+      // totalUSD/ARS = solo cuentas reales (sin reserva)
+      const totalUSD = ubicacionesConSaldo.filter(u => u.moneda === 'USD' && !u.es_reserva).reduce((s, u) => s + u.saldo, 0)
+      const totalARSAhorros = ubicacionesConSaldo.filter(u => u.moneda === 'ARS' && !u.es_reserva).reduce((s, u) => s + u.saldo, 0)
+      // reserva = porcion ficticia bloqueada dentro del total real
+      const totalReservaUSD = ubicacionesConSaldo.filter(u => u.moneda === 'USD' && u.es_reserva).reduce((s, u) => s + u.saldo, 0)
+      const totalReservaARS = ubicacionesConSaldo.filter(u => u.moneda === 'ARS' && u.es_reserva).reduce((s, u) => s + u.saldo, 0)
+      // libre = real − reserva
+      const libreUSD = totalUSD - totalReservaUSD
+      const libreARS = totalARSAhorros - totalReservaARS
 
       // Metas con progreso
       const metasList = metas ?? []
@@ -121,8 +128,10 @@ export function useDashboard(year, month) {
         balanceAntARS: ingresosAntARS - gastosAntARS,
         gastosPorRubro,
         ubicaciones: ubicacionesConSaldo,
-        totalUSD,
-        totalARSAhorros,
+        totalUSD: libreUSD,
+        totalARSAhorros: libreARS,
+        totalReservaUSD,
+        totalReservaARS,
         metas: metasConProgreso,
       })
       setLoading(false)
