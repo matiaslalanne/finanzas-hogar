@@ -89,10 +89,13 @@ export default function Ahorros() {
   const { ubicaciones, movimientos, loading, refetch } = useAhorros()
   const [showModal, setShowModal] = useState(false)
 
-  const ubiARS = ubicaciones.filter(u => u.moneda === 'ARS')
-  const ubiUSD = ubicaciones.filter(u => u.moneda === 'USD')
+  const ubiARS = ubicaciones.filter(u => u.moneda === 'ARS' && !u.es_reserva)
+  const ubiUSD = ubicaciones.filter(u => u.moneda === 'USD' && !u.es_reserva)
+  const ubiReserva = ubicaciones.filter(u => u.es_reserva)
   const totalARS = ubiARS.reduce((s, u) => s + u.saldo, 0)
   const totalUSD = ubiUSD.reduce((s, u) => s + u.saldo, 0)
+  const totalReservaUSD = ubiReserva.filter(u => u.moneda === 'USD').reduce((s, u) => s + u.saldo, 0)
+  const totalReservaARS = ubiReserva.filter(u => u.moneda === 'ARS').reduce((s, u) => s + u.saldo, 0)
 
   const movRecientes = movimientos.filter(m => m.tipo !== 'saldo_inicial').slice(0, 30)
 
@@ -100,19 +103,48 @@ export default function Ahorros() {
     <div className="pb-8">
 
       {/* ── TOTALES ───────────────────────────────────── */}
-      <div className="px-4 pt-4 pb-3 grid grid-cols-2 gap-3">
-        <div className="bg-slate-800 rounded-2xl px-4 py-3">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total USD</p>
-          <p className="text-xl font-bold text-slate-100 tabular-nums">
-            {fmtMonto(totalUSD, 'USD')}
-          </p>
+      <div className="px-4 pt-4 pb-3 space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-800 rounded-2xl px-4 py-3">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">USD libre</p>
+            <p className="text-xl font-bold text-slate-100 tabular-nums">
+              {fmtMonto(totalUSD, 'USD')}
+            </p>
+            {totalReservaUSD > 0 && (
+              <p className="text-[10px] text-slate-500 mt-1">
+                + {fmtMonto(totalReservaUSD, 'USD')} reserva
+              </p>
+            )}
+          </div>
+          <div className="bg-slate-800 rounded-2xl px-4 py-3">
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total ARS</p>
+            <p className="text-xl font-bold text-slate-100 tabular-nums">
+              {fmtMonto(totalARS, 'ARS')}
+            </p>
+            {totalReservaARS > 0 && (
+              <p className="text-[10px] text-slate-500 mt-1">
+                + {fmtMonto(totalReservaARS, 'ARS')} reserva
+              </p>
+            )}
+          </div>
         </div>
-        <div className="bg-slate-800 rounded-2xl px-4 py-3">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total ARS</p>
-          <p className="text-xl font-bold text-slate-100 tabular-nums">
-            {fmtMonto(totalARS, 'ARS')}
-          </p>
-        </div>
+        {(totalReservaUSD > 0 || totalReservaARS > 0) && (
+          <div className="bg-slate-800/50 rounded-2xl px-4 py-2.5 flex items-center justify-between">
+            <p className="text-[11px] text-slate-500">Total con reserva</p>
+            <div className="flex gap-4">
+              {totalReservaUSD > 0 && (
+                <p className="text-sm font-semibold text-slate-400 tabular-nums">
+                  {fmtMonto(totalUSD + totalReservaUSD, 'USD')}
+                </p>
+              )}
+              {totalReservaARS > 0 && (
+                <p className="text-sm font-semibold text-slate-400 tabular-nums">
+                  {fmtMonto(totalARS + totalReservaARS, 'ARS')}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── BOTÓN NUEVO MOVIMIENTO ─────────────────────── */}
@@ -152,6 +184,18 @@ export default function Ahorros() {
               </p>
               <div className="space-y-2">
                 {ubiARS.map(u => <UbicacionCard key={u.id} u={u} />)}
+              </div>
+            </section>
+          )}
+
+          {/* ── FONDOS DE RESERVA ─────────────────────── */}
+          {ubiReserva.length > 0 && (
+            <section className="px-4 mb-5">
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">
+                🔒 Fondos de reserva
+              </p>
+              <div className="space-y-2">
+                {ubiReserva.map(u => <UbicacionCard key={u.id} u={u} />)}
               </div>
             </section>
           )}

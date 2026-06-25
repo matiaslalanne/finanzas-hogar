@@ -432,7 +432,7 @@ function UbicacionesTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [sheet, setSheet] = useState({ open: false, item: null })
-  const [form, setForm] = useState({ nombre: '', moneda: 'USD', saldoInicial: '' })
+  const [form, setForm] = useState({ nombre: '', moneda: 'USD', saldoInicial: '', esReserva: false })
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState({ open: false, id: null })
 
@@ -444,7 +444,7 @@ function UbicacionesTab() {
   useEffect(() => { load() }, [])
 
   const openNew = () => {
-    setForm({ nombre: '', moneda: 'USD', saldoInicial: '' })
+    setForm({ nombre: '', moneda: 'USD', saldoInicial: '', esReserva: false })
     setSheet({ open: true, item: null })
   }
   const openEdit = async item => {
@@ -454,7 +454,7 @@ function UbicacionesTab() {
       .eq('tipo', 'saldo_inicial')
       .eq('ubicacion_destino', item.id)
       .maybeSingle()
-    setForm({ nombre: item.nombre, moneda: item.moneda, saldoInicial: si ? String(si.monto) : '' })
+    setForm({ nombre: item.nombre, moneda: item.moneda, saldoInicial: si ? String(si.monto) : '', esReserva: item.es_reserva ?? false })
     setSheet({ open: true, item })
   }
   const closeSheet = () => setSheet({ open: false, item: null })
@@ -463,7 +463,7 @@ function UbicacionesTab() {
     if (!form.nombre.trim()) return showToast('Ingresá un nombre', 'error')
     setSaving(true)
 
-    const payload = { nombre: form.nombre.trim(), moneda: form.moneda }
+    const payload = { nombre: form.nombre.trim(), moneda: form.moneda, es_reserva: form.esReserva }
     let savedId = sheet.item?.id
 
     if (sheet.item) {
@@ -522,7 +522,7 @@ function UbicacionesTab() {
             key={item.id}
             item={item}
             label={item.nombre}
-            sub={item.moneda}
+            sub={[item.moneda, item.es_reserva ? 'Reserva' : null].filter(Boolean).join(' · ')}
             onEdit={() => openEdit(item)}
             onDelete={() => setConfirm({ open: true, id: item.id })}
             onToggle={() => handleToggle(item)}
@@ -538,6 +538,15 @@ function UbicacionesTab() {
           placeholder="ICBC Mati"
         />
         <Chips label="Moneda" options={MONEDAS} value={form.moneda} onChange={v => setForm(f => ({ ...f, moneda: v }))} />
+        <Chips
+          label="Tipo de ubicación"
+          options={[
+            { value: false, label: 'Ahorro libre' },
+            { value: true, label: 'Fondo de reserva' },
+          ]}
+          value={form.esReserva}
+          onChange={v => setForm(f => ({ ...f, esReserva: v }))}
+        />
         <TextInput
           label="Saldo de arranque (no aparece como movimiento)"
           value={form.saldoInicial}
