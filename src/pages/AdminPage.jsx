@@ -432,7 +432,7 @@ function UbicacionesTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [sheet, setSheet] = useState({ open: false, item: null })
-  const [form, setForm] = useState({ nombre: '', moneda: 'USD' })
+  const [form, setForm] = useState({ nombre: '', moneda: 'USD', saldoInicial: '' })
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState({ open: false, id: null })
 
@@ -443,19 +443,56 @@ function UbicacionesTab() {
   }
   useEffect(() => { load() }, [])
 
-  const openNew = () => { setForm({ nombre: '', moneda: 'USD' }); setSheet({ open: true, item: null }) }
-  const openEdit = item => { setForm({ nombre: item.nombre, moneda: item.moneda }); setSheet({ open: true, item }) }
+  const openNew = () => {
+    setForm({ nombre: '', moneda: 'USD', saldoInicial: '' })
+    setSheet({ open: true, item: null })
+  }
+  const openEdit = async item => {
+    const { data: si } = await supabase
+      .from('movimientos_ahorro')
+      .select('monto')
+      .eq('tipo', 'saldo_inicial')
+      .eq('ubicacion_destino', item.id)
+      .maybeSingle()
+    setForm({ nombre: item.nombre, moneda: item.moneda, saldoInicial: si ? String(si.monto) : '' })
+    setSheet({ open: true, item })
+  }
   const closeSheet = () => setSheet({ open: false, item: null })
 
   const handleSave = async () => {
     if (!form.nombre.trim()) return showToast('Ingresá un nombre', 'error')
     setSaving(true)
+
     const payload = { nombre: form.nombre.trim(), moneda: form.moneda }
-    const { error } = sheet.item
-      ? await supabase.from('ubicaciones_ahorro').update(payload).eq('id', sheet.item.id)
-      : await supabase.from('ubicaciones_ahorro').insert(payload)
+    let savedId = sheet.item?.id
+
+    if (sheet.item) {
+      const { error } = await supabase.from('ubicaciones_ahorro').update(payload).eq('id', sheet.item.id)
+      if (error) { setSaving(false); return showToast(error.message ?? 'Error al guardar', 'error') }
+    } else {
+      const { data, error } = await supabase.from('ubicaciones_ahorro').insert(payload).select('id').single()
+      if (error) { setSaving(false); return showToast(error.message ?? 'Error al guardar', 'error') }
+      savedId = data.id
+    }
+
+    // Saldo de arranque: eliminar el anterior y re-insertar si el monto es válido
+    await supabase.from('movimientos_ahorro').delete()
+      .eq('tipo', 'saldo_inicial')
+      .eq('ubicacion_destino', savedId)
+
+    const montoSaldo = parseFloat(String(form.saldoInicial).replace(',', '.'))
+    if (!isNaN(montoSaldo) && montoSaldo > 0) {
+      await supabase.from('movimientos_ahorro').insert({
+        tipo: 'saldo_inicial',
+        fecha: '2000-01-01',
+        ubicacion_destino: savedId,
+        monto: montoSaldo,
+        moneda: form.moneda,
+        persona: 'hogar',
+      })
+    }
+
     setSaving(false)
-    if (error) return showToast(error.message ?? 'Error al guardar', 'error')
     closeSheet()
     showToast(sheet.item ? 'Ubicación actualizada' : 'Ubicación creada')
     load()
@@ -501,6 +538,15 @@ function UbicacionesTab() {
           placeholder="ICBC Mati"
         />
         <Chips label="Moneda" options={MONEDAS} value={form.moneda} onChange={v => setForm(f => ({ ...f, moneda: v }))} />
+        <TextInput
+          label="Saldo de arranque (no aparece como movimiento)"
+          value={form.saldoInicial}
+          onChange={e => setForm(f => ({ ...f, saldoInicial: e.target.value }))}
+          placeholder="0"
+          type="number"
+          inputMode="decimal"
+          min="0"
+        />
         <GuardarBtn onClick={handleSave} saving={saving} disabled={!form.nombre.trim()} />
       </BottomSheet>
 

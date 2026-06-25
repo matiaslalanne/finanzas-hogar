@@ -94,7 +94,7 @@ export default function Ahorros() {
   const totalARS = ubiARS.reduce((s, u) => s + u.saldo, 0)
   const totalUSD = ubiUSD.reduce((s, u) => s + u.saldo, 0)
 
-  const movRecientes = movimientos.slice(0, 30)
+  const movRecientes = movimientos.filter(m => m.tipo !== 'saldo_inicial').slice(0, 30)
 
   return (
     <div className="pb-8">
